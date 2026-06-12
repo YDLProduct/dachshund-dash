@@ -132,8 +132,8 @@ const CFG = {
   dt: 1 / 120,
   ppm: 20,                 // pixels per meter (narrower view than desktop)
   trackLen: 250,
-  impulse: 4.3,
-  drag: 2.0,
+  impulse: 5.2,            // punchier per-tap kick; impulse/drag ratio matches desktop so top speeds are unchanged
+  drag: 2.42,
   vmax: 13.5,
   tapCost: 1.1,
   regen: 5.5,
@@ -359,9 +359,9 @@ const Snd = {
   step() {
     if (!this.ok()) return;
     const now = this.ctx.currentTime;
-    if (now - this.lastStep < 0.06) return;
+    if (now - this.lastStep < 0.045) return;
     this.lastStep = now;
-    this.noise(0.045, 0.05, 0, 650, 'lowpass');
+    this.noise(0.045, 0.07, 0, 700, 'lowpass');
   },
   beep(f, dur, vol) { this.tone(f, dur, 'square', vol); },
   bark(vol) {
@@ -467,7 +467,7 @@ function toggleMute() {
 function spawnDust(d) {
   if (G.particles.length > 200) return;
   const lane = d.lane;
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 3; i++) {
     G.particles.push({
       x: d.x * CFG.ppm - 30 * lane.scale + rand(-8, 8),
       y: lane.ground - 2 + rand(-2, 2),
@@ -570,9 +570,21 @@ function dogStride(d, side) {
   if (eff === 1 && d.zoomT <= 0) d.zoom = Math.min(100, d.zoom + CFG.zoomPerTap);
   d.hopT = 0.12;
   if (d.v > 2.5) spawnDust(d);
-  if (d.id === 'player') {
-    G.pawFlash.side = side;
-    G.pawFlash.t = 0.14;
+  if (d.id === 'player') Snd.step();
+}
+
+/* on touch, every tap is a full-power stride — the gait alternates
+   automatically, so drumming any pad with any thumb never gets the
+   same-side penalty (that stays a keyboard/desktop mechanic) */
+function playerTap(btnSide) {
+  G.pawFlash.side = btnSide;
+  G.pawFlash.t = 0.1;
+  const p = G.player;
+  if (G.state === 'racing') {
+    dogStride(p, p.lastSide === 'L' ? 'R' : 'L');
+  } else if (G.state === 'countdown') {
+    p.lastSide = btnSide;     // keeps the TAP! hint bouncing between pads
+    p.hopT = 0.1;
     Snd.step();
   }
 }
@@ -1036,7 +1048,7 @@ function drawDog(px, groundY, scale, d, photoMode) {
   let bounce;
   if (isWin) bounce = Math.abs(Math.sin(G.animT * 7 + d.blinkSeed)) * 15;
   else if (idle) bounce = (1 + Math.sin(G.animT * 2.2 + d.blinkSeed)) * 0.9;
-  else bounce = Math.abs(Math.sin(d.phase)) * (2 + Math.min(9, d.v * 0.7)) + (d.hopT > 0 ? (d.hopT / 0.12) * 2.5 : 0);
+  else bounce = Math.abs(Math.sin(d.phase)) * (2 + Math.min(9, d.v * 0.7)) + (d.hopT > 0 ? (d.hopT / 0.12) * 4 : 0);
 
   ctx.save();
   ctx.translate(px, groundY);
@@ -1359,24 +1371,32 @@ function drawControls() {
     G.ui.push({ id: 'paw' + side, x, y, w, h });
     const flash = G.pawFlash.side === side && G.pawFlash.t > 0;
     const hint = racing && G.raceT < 8 && side === nextSide && !flash;
-    ctx.fillStyle = flash ? 'rgba(120,200,90,0.85)'
+    ctx.save();
+    if (flash) {
+      const pop = 1 + 0.05 * (G.pawFlash.t / 0.1);
+      ctx.translate(x + w / 2, y + h / 2);
+      ctx.scale(pop, pop);
+      ctx.translate(-(x + w / 2), -(y + h / 2));
+    }
+    ctx.fillStyle = flash ? 'rgba(135,220,98,0.95)'
       : hint ? 'rgba(70,90,60,' + (0.62 + 0.18 * Math.sin(G.animT * 7)).toFixed(2) + ')'
       : 'rgba(30,38,26,0.6)';
     rr(x, y, w, h, 26);
     ctx.fill();
-    ctx.strokeStyle = flash ? '#dff5d2' : 'rgba(255,255,255,0.3)';
-    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = flash ? '#eaffdf' : 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = flash ? 4 : 2.5;
     rr(x, y, w, h, 26);
     ctx.stroke();
-    tx('🐾', x + w / 2, y + h / 2 - 18, 42, { sw: 0 });
-    tx(side === 'L' ? 'LEFT' : 'RIGHT', x + w / 2, y + h / 2 + 38, 17, { c: 'rgba(255,255,255,0.85)', sw: 0 });
+    tx('🐾', x + w / 2, y + h / 2 - 14, 46, { sw: 0 });
+    tx('TAP', x + w / 2, y + h / 2 + 42, 17, { c: 'rgba(255,255,255,0.85)', sw: 0 });
+    ctx.restore();
     if (hint) {
       tx('TAP!', x + w / 2, y - 16, 17, { c: '#ffd34e', stroke: 'rgba(0,0,0,0.55)', sw: 3 });
     }
   }
   if (racing && G.raceT < 6) {
     const a = clamp(6 - G.raceT, 0, 1) * 0.9;
-    tx('alternate paws to run!', 270, ct + 244, 15, { c: 'rgba(255,255,255,' + a.toFixed(2) + ')', stroke: 'rgba(0,0,0,' + (a * 0.5).toFixed(2) + ')', sw: 3 });
+    tx('drum with both thumbs — every tap counts!', 270, ct + 244, 15, { c: 'rgba(255,255,255,' + a.toFixed(2) + ')', stroke: 'rgba(0,0,0,' + (a * 0.5).toFixed(2) + ')', sw: 3 });
   }
 }
 
@@ -1471,7 +1491,7 @@ function drawTitle() {
   }
 
   button('mute', 484, st + 10, 44, 44, G.muted ? '🔇' : '🔊', { bg: 'rgba(20,16,10,0.45)', hotBg: 'rgba(20,16,10,0.7)', r: 12, size: 19, pad: 8 });
-  tx('v1.0', 528, H - safeBottom - 10, 10, { c: 'rgba(255,255,255,0.4)', sw: 0, align: 'right' });
+  tx('v1.1', 528, H - safeBottom - 10, 10, { c: 'rgba(255,255,255,0.4)', sw: 0, align: 'right' });
 }
 
 function drawCountdown() {
@@ -1704,11 +1724,13 @@ function handleKey(code) {
       else if (code === 'Space' || code === 'Enter') startRace();
       break;
     case 'countdown':
-      if (code === 'KeyP' || code === 'Escape') setPause(true);
+      if (KEYS_L.includes(code)) playerTap('L');
+      else if (KEYS_R.includes(code)) playerTap('R');
+      else if (code === 'KeyP' || code === 'Escape') setPause(true);
       break;
     case 'racing':
-      if (KEYS_L.includes(code)) dogStride(G.player, 'L');
-      else if (KEYS_R.includes(code)) dogStride(G.player, 'R');
+      if (KEYS_L.includes(code)) playerTap('L');
+      else if (KEYS_R.includes(code)) playerTap('R');
       else if (code === 'Space') dogZoomies(G.player);
       else if (code === 'KeyP' || code === 'Escape') setPause(true);
       break;
@@ -1751,9 +1773,9 @@ function uiAction(id) {
   if (id === 'menu') { if (G.state !== 'finished' || G.resultsT > 0.3) toTitle(); return; }
   if (id === 'start') { startRace(); return; }
   if (id === 'rematch') { if (G.resultsT > 0.3) startRace(); return; }
-  if (id === 'pawL') { dogStride(G.player, 'L'); return; }
-  if (id === 'pawR') { dogStride(G.player, 'R'); return; }
-  if (id === 'zoom') { if (!dogZoomies(G.player)) dogStride(G.player, 'R'); return; }
+  if (id === 'pawL') { playerTap('L'); return; }
+  if (id === 'pawR') { playerTap('R'); return; }
+  if (id === 'zoom') { if (!dogZoomies(G.player)) playerTap('R'); return; }
   if (id.indexOf('diff-') === 0) {
     const k = id.slice(5);
     if (DIFF_ORDER.includes(k)) { G.diff = k; saveData(); }
@@ -1777,8 +1799,8 @@ canvas.addEventListener('pointerdown', e => {
     }
   }
   // generous fallback: anywhere below the HUD counts as a stride tap
-  if (G.state === 'racing' && p.y > safeTop + 120) {
-    dogStride(G.player, p.x < W / 2 ? 'L' : 'R');
+  if ((G.state === 'racing' || G.state === 'countdown') && p.y > safeTop + 120) {
+    playerTap(p.x < W / 2 ? 'L' : 'R');
   }
 });
 canvas.addEventListener('pointermove', e => { G.pointer = toLogical(e); });

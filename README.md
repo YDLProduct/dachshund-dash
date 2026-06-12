@@ -17,7 +17,7 @@ mystery "???" silhouette until then). First dachshund over the 250m line wins.
 
 | Action | Keyboard | Touch |
 |---|---|---|
-| Run | Alternate **←/→** (or **A/D**) | Tap **left/right halves** of the screen alternately |
+| Run | Alternate **←/→** (or **A/D**) | Drum the **🐾 pads** with both thumbs — every tap counts |
 | Zoomies (speed boost) | **SPACE** when the meter is full | Tap the **⚡ button** |
 | Pause | **P** or **ESC** | ⏸ button |
 | Mute | **M** | 🔊 button |
