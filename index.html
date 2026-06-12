@@ -128,10 +128,10 @@ const LANES = {
 
 const ROSTER = [
   { id: 'frank',   name: 'FRANK',   colors: { main: '#b5642c', dark: '#84481d', ear: '#743f18', belly: '#e0a468', paw: '#84481d', collar: '#d8333b', snout: '#b5642c', brow: null } },
-  { id: 'baron',   name: 'UZI',     colors: { main: '#332b24', dark: '#201a15', ear: '#1c1612', belly: '#9c6a3a', paw: '#c98a4f', collar: '#2c63d8', snout: '#c98a4f', brow: '#c98a4f' } },
+  { id: 'baron',   name: 'UZI',     colors: { main: '#221f1d', dark: '#141211', ear: '#161413', belly: '#95642e', paw: '#b5722e', collar: '#2c63d8', snout: '#b5722e', brow: '#b5722e' } },
   { id: 'pretzel', name: 'PRETZEL', colors: { main: '#e8d3a4', dark: '#c2a468', ear: '#ab8a4e', belly: '#f6ead0', paw: '#c2a468', collar: '#2ba98d', snout: '#e8d3a4', brow: null } },
   { id: 'mocha',   name: 'MOCHA',   colors: { main: '#5d3a26', dark: '#43291a', ear: '#3a2316', belly: '#c08a55', paw: '#c08a55', collar: '#8a4fd8', snout: '#c08a55', brow: '#c08a55' } },
-  { id: 'pepper',  name: 'PEPPER',  colors: { main: '#7d838c', dark: '#5a5f66', ear: '#4d525a', belly: '#bcc2ca', paw: '#5a5f66', collar: '#e8762e', snout: '#7d838c', brow: null } },
+  { id: 'pepper',  name: 'PEPPER',  colors: { main: '#9aa0a8', dark: '#5a5d63', ear: '#2e2c2a', belly: '#c6cad1', paw: '#5a5d63', collar: '#ef5fae', snout: '#b5773a', brow: '#b5773a', dapple: '#26241f' } },
   { id: 'goldie',  name: 'GOLDIE',  colors: { main: '#d8a13a', dark: '#b07e24', ear: '#99691c', belly: '#f0d490', paw: '#b07e24', collar: '#d8338a', snout: '#d8a13a', brow: null } }
 ];
 // CPU identity is hidden on the title screen until the race drafts a rival
@@ -1064,6 +1064,21 @@ function drawDog(px, groundY, scale, d, photoMode) {
   ctx.fill();
   ctx.globalAlpha = 1;
   ctx.restore();
+  // dapple (merle) coat patches, clipped to the body
+  if (C.dapple) {
+    ctx.save();
+    rr(-46, bodyCy - 20, 92, 40, 20);
+    ctx.clip();
+    ctx.fillStyle = C.dapple;
+    for (let i = 0; i < 7; i++) {
+      const mx = -44 + hash(i * 3.7 + 1.3) * 88;
+      const my = bodyCy - 18 + hash(i * 8.1 + 2.6) * 36;
+      ctx.beginPath();
+      ctx.ellipse(mx, my, 6 + hash(i * 5.3) * 9, 4 + hash(i * 2.9) * 6, hash(i * 7.7) * 3, 0, 7);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
 
   // tail
   const wag = idle || isWin ? 0.55 + Math.sin(G.animT * (isWin ? 14 : 6) + d.blinkSeed * 3) * 0.5
@@ -1106,6 +1121,18 @@ function drawDog(px, groundY, scale, d, photoMode) {
 
   ctx.fillStyle = C.main;
   ctx.beginPath(); ctx.arc(hx, hy, 17, 0, 7); ctx.fill();
+  if (C.dapple) {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(hx, hy, 17, 0, 7); ctx.clip();
+    ctx.fillStyle = C.dapple;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.ellipse(hx - 13 + hash(i * 4.3 + 0.7) * 26, hy - 13 + hash(i * 6.7 + 1.9) * 26,
+        4 + hash(i * 9.1) * 5, 3 + hash(i * 3.1) * 4, hash(i * 5.9) * 3, 0, 7);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
 
   // snout
   ctx.fillStyle = C.snout;
@@ -1161,6 +1188,15 @@ function drawMiniHead(x, y, C) {
   ctx.translate(x, y);
   ctx.fillStyle = C.main;
   ctx.beginPath(); ctx.arc(0, 0, 10, 0, 7); ctx.fill();
+  if (C.dapple) {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(0, 0, 10, 0, 7); ctx.clip();
+    ctx.fillStyle = C.dapple;
+    ctx.beginPath(); ctx.ellipse(-3, -4, 4, 3, 0.5, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(4, 3, 3.5, 2.5, 2.2, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-5, 5, 2.5, 2, 1.1, 0, 7); ctx.fill();
+    ctx.restore();
+  }
   ctx.fillStyle = C.snout;
   rr(4, -3, 16, 8, 4); ctx.fill();
   ctx.fillStyle = '#2a1d12';
