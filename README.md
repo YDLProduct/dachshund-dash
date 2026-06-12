@@ -8,10 +8,9 @@ A player-vs-CPU wiener dog racing game in a single HTML file. No build, no depen
 Serve the folder (e.g. `python3 -m http.server 8420`) and open `http://<your-computer-ip>:8420/mobile/`
 on the phone over the same Wi-Fi.
 
-Pick your pup from a roster of six dachshunds — FRANK (chestnut), UZI (black & tan),
-PRETZEL (cream), MOCHA (chocolate), PEPPER (silver) and GOLDIE (gold). You race in the bottom
-lane; the CPU automatically drafts one of the remaining pups when the race starts (it shows as a
-mystery "???" silhouette until then). First dachshund over the 250m line wins.
+Two racers: **UZI** (black & tan) and **PEPPER** (silver dapple, pink collar). Pick yours on the
+title screen — the CPU automatically runs the other. You race in the bottom lane; first dachshund
+over the 250m line wins.
 
 ## How to play
 

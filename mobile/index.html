@@ -162,14 +162,9 @@ const LANES = {
 };
 
 const ROSTER = [
-  { id: 'frank',   name: 'FRANK',   colors: { main: '#b5642c', dark: '#84481d', ear: '#743f18', belly: '#e0a468', paw: '#84481d', collar: '#d8333b', snout: '#b5642c', brow: null } },
   { id: 'baron',   name: 'UZI',     colors: { main: '#221f1d', dark: '#141211', ear: '#161413', belly: '#95642e', paw: '#b5722e', collar: '#2c63d8', snout: '#b5722e', brow: '#b5722e' } },
-  { id: 'pretzel', name: 'PRETZEL', colors: { main: '#e8d3a4', dark: '#c2a468', ear: '#ab8a4e', belly: '#f6ead0', paw: '#c2a468', collar: '#2ba98d', snout: '#e8d3a4', brow: null } },
-  { id: 'mocha',   name: 'MOCHA',   colors: { main: '#5d3a26', dark: '#43291a', ear: '#3a2316', belly: '#c08a55', paw: '#c08a55', collar: '#8a4fd8', snout: '#c08a55', brow: '#c08a55' } },
-  { id: 'pepper',  name: 'PEPPER',  colors: { main: '#9aa0a8', dark: '#5a5d63', ear: '#2e2c2a', belly: '#c6cad1', paw: '#5a5d63', collar: '#ef5fae', snout: '#b5773a', brow: '#b5773a', dapple: '#26241f' } },
-  { id: 'goldie',  name: 'GOLDIE',  colors: { main: '#d8a13a', dark: '#b07e24', ear: '#99691c', belly: '#f0d490', paw: '#b07e24', collar: '#d8338a', snout: '#d8a13a', brow: null } }
+  { id: 'pepper',  name: 'PEPPER',  colors: { main: '#9aa0a8', dark: '#5a5d63', ear: '#2e2c2a', belly: '#c6cad1', paw: '#5a5d63', collar: '#ef5fae', snout: '#b5773a', brow: '#b5773a', dapple: '#26241f' } }
 ];
-const MYSTERY = { main: '#555a64', dark: '#43474d', ear: '#3c4046', belly: '#737983', paw: '#43474d', collar: '#6a6f78', snout: '#555a64', brow: null };
 
 /* ===================== persistence ===================== */
 
@@ -217,8 +212,8 @@ const G = {
   animT: 0,
   raceT: 0, countT: 0, cdLast: 4, goFlash: 0,
   camX: -110,
-  player: makeDog('player', 'FRANK', ROSTER[0].colors, LANES.player),
-  cpu: makeDog('cpu', '???', MYSTERY, LANES.cpu),
+  player: makeDog('player', 'UZI', ROSTER[0].colors, LANES.player),
+  cpu: makeDog('cpu', 'PEPPER', ROSTER[1].colors, LANES.cpu),
   treats: [],
   particles: [],
   confetti: [],
@@ -248,15 +243,13 @@ const G = {
 
 function applyPlayerChar() {
   const ch = ROSTER[G.charSel];
+  const rival = ROSTER[G.charSel === 0 ? 1 : 0];
   G.player.name = ch.name;
   G.player.colors = ch.colors;
-}
-function setCpuMystery() {
-  G.cpu.name = '???';
-  G.cpu.colors = MYSTERY;
+  G.cpu.name = rival.name;
+  G.cpu.colors = rival.colors;
 }
 applyPlayerChar();
-setCpuMystery();
 
 /* ===================== audio ===================== */
 
@@ -668,12 +661,7 @@ function camTargetX() {
 }
 
 function startRace() {
-  const pool = [];
-  for (let i = 0; i < ROSTER.length; i++) if (i !== G.charSel) pool.push(i);
-  const rival = ROSTER[pool[Math.floor(rand(0, pool.length))]];
-  G.cpu.name = rival.name;
-  G.cpu.colors = rival.colors;
-  applyPlayerChar();
+  applyPlayerChar();   // CPU always runs the other pup
   resetDog(G.player);
   resetDog(G.cpu);
   aiReset();
@@ -706,7 +694,6 @@ function toTitle() {
   G.winner = null;
   G.order = [];
   G.treats = [];
-  setCpuMystery();
   updateMusic();
 }
 
@@ -1412,14 +1399,13 @@ function drawTitle() {
   tx('DASH!', 270, st + 110 + wob, 52, { c: '#fff', stroke: '#5b3413', sw: 9 });
   tx('May the best wiener win! 🌭', 270, st + 148, 16, { c: '#fff', stroke: 'rgba(40,25,10,0.7)', sw: 4 });
 
-  // character picker: 2 rows of 3
-  tx('PICK YOUR PUP', 270, st + 186, 13, { c: 'rgba(255,255,255,0.85)', stroke: 'rgba(0,0,0,0.5)', sw: 3 });
-  const cw = 156, chh = 120, cgap = 14;
-  const cx0 = 270 - (cw * 3 + cgap * 2) / 2;
+  // character picker — two pups, the CPU runs whichever you don't pick
+  tx('PICK YOUR PUP — the CPU runs the other', 270, st + 186, 13, { c: 'rgba(255,255,255,0.85)', stroke: 'rgba(0,0,0,0.5)', sw: 3 });
+  const cw = 230, chh = 200, cgap = 20;
+  const cx0 = 270 - (cw * 2 + cgap) / 2;
   for (let i = 0; i < ROSTER.length; i++) {
-    const col = i % 3, row = Math.floor(i / 3);
-    const x = cx0 + col * (cw + cgap);
-    const y = st + 200 + row * (chh + 14);
+    const x = cx0 + i * (cw + cgap);
+    const y = st + 204;
     const ch = ROSTER[i];
     const sel = i === G.charSel;
     G.ui.push({ id: 'char-' + i, x, y, w: cw, h: chh });
@@ -1431,19 +1417,20 @@ function drawTitle() {
       ctx.translate(-(x + cw / 2), -(y + chh / 2));
     }
     ctx.fillStyle = sel ? 'rgba(232,118,46,0.92)' : 'rgba(25,28,24,0.6)';
-    rr(x, y, cw, chh, 16);
+    rr(x, y, cw, chh, 20);
     ctx.fill();
     if (sel) {
       ctx.strokeStyle = '#ffd9a8';
-      ctx.lineWidth = 3;
-      rr(x, y, cw, chh, 16);
+      ctx.lineWidth = 3.5;
+      rr(x, y, cw, chh, 20);
       ctx.stroke();
     }
-    ctx.translate(x + cw / 2 - 8, y + 46);
-    ctx.scale(2.1, 2.1);
+    ctx.translate(x + cw / 2 - 12, y + 78);
+    ctx.scale(3.0, 3.0);
     drawMiniHead(0, 0, ch.colors);
     ctx.restore();
-    tx(ch.name, x + cw / 2, y + chh - 20, 14, { c: sel ? '#fff' : 'rgba(255,255,255,0.88)', sw: 0 });
+    tx(ch.name, x + cw / 2, y + chh - 56, 18, { c: sel ? '#fff' : 'rgba(255,255,255,0.88)', sw: 0 });
+    tx(sel ? '★ YOU' : 'CPU', x + cw / 2, y + chh - 26, 13, { c: sel ? '#ffe9c8' : 'rgba(255,255,255,0.6)', sw: 0 });
   }
 
   // difficulty
@@ -1475,7 +1462,7 @@ function drawTitle() {
   ctx.fillStyle = 'rgba(15,22,12,0.62)';
   rr(30, st + 682, 480, 86, 16);
   ctx.fill();
-  tx('TAP 🐾 left / right alternately to RUN', 270, st + 710, 16, { sw: 0, c: '#fff' });
+  tx('Drum the 🐾 pad fast to RUN — every tap counts', 270, st + 710, 16, { sw: 0, c: '#fff' });
   tx('⚡ = ZOOMIES when full · 🦴 = stamina', 270, st + 740, 16, { sw: 0, c: 'rgba(255,255,255,0.85)' });
 
   // pup previews anchored to the bottom lawn (skipped on very short screens)
@@ -1488,7 +1475,7 @@ function drawTitle() {
   }
 
   button('mute', 484, st + 10, 44, 44, G.muted ? '🔇' : '🔊', { bg: 'rgba(20,16,10,0.45)', hotBg: 'rgba(20,16,10,0.7)', r: 12, size: 19, pad: 8 });
-  tx('v1.1', 528, H - safeBottom - 10, 10, { c: 'rgba(255,255,255,0.4)', sw: 0, align: 'right' });
+  tx('v1.2', 528, H - safeBottom - 10, 10, { c: 'rgba(255,255,255,0.4)', sw: 0, align: 'right' });
 }
 
 function drawCountdown() {
