@@ -574,16 +574,15 @@ function dogStride(d, side) {
 }
 
 /* on touch, every tap is a full-power stride — the gait alternates
-   automatically, so drumming any pad with any thumb never gets the
+   automatically, so drumming the pad with any thumb never gets the
    same-side penalty (that stays a keyboard/desktop mechanic) */
-function playerTap(btnSide) {
-  G.pawFlash.side = btnSide;
+function playerTap() {
   G.pawFlash.t = 0.1;
   const p = G.player;
   if (G.state === 'racing') {
     dogStride(p, p.lastSide === 'L' ? 'R' : 'L');
   } else if (G.state === 'countdown') {
-    p.lastSide = btnSide;     // keeps the TAP! hint bouncing between pads
+    p.lastSide = p.lastSide === 'L' ? 'R' : 'L';
     p.hopT = 0.1;
     Snd.step();
   }
@@ -1363,36 +1362,34 @@ function drawControls() {
     ctx.restore();
   }
 
-  // paw buttons
+  // one wide drumming pad
   const racing = G.state === 'racing';
-  const nextSide = p.lastSide === 'L' ? 'R' : 'L';
-  for (const [side, x] of [['L', 18], ['R', 302]]) {
-    const y = ct + 74, w = 220, h = 148;
-    G.ui.push({ id: 'paw' + side, x, y, w, h });
-    const flash = G.pawFlash.side === side && G.pawFlash.t > 0;
-    const hint = racing && G.raceT < 8 && side === nextSide && !flash;
-    ctx.save();
-    if (flash) {
-      const pop = 1 + 0.05 * (G.pawFlash.t / 0.1);
-      ctx.translate(x + w / 2, y + h / 2);
-      ctx.scale(pop, pop);
-      ctx.translate(-(x + w / 2), -(y + h / 2));
-    }
-    ctx.fillStyle = flash ? 'rgba(135,220,98,0.95)'
-      : hint ? 'rgba(70,90,60,' + (0.62 + 0.18 * Math.sin(G.animT * 7)).toFixed(2) + ')'
-      : 'rgba(30,38,26,0.6)';
-    rr(x, y, w, h, 26);
-    ctx.fill();
-    ctx.strokeStyle = flash ? '#eaffdf' : 'rgba(255,255,255,0.3)';
-    ctx.lineWidth = flash ? 4 : 2.5;
-    rr(x, y, w, h, 26);
-    ctx.stroke();
-    tx('🐾', x + w / 2, y + h / 2 - 14, 46, { sw: 0 });
-    tx('TAP', x + w / 2, y + h / 2 + 42, 17, { c: 'rgba(255,255,255,0.85)', sw: 0 });
-    ctx.restore();
-    if (hint) {
-      tx('TAP!', x + w / 2, y - 16, 17, { c: '#ffd34e', stroke: 'rgba(0,0,0,0.55)', sw: 3 });
-    }
+  const x = 18, y = ct + 74, w = 504, h = 148;
+  G.ui.push({ id: 'paw', x, y, w, h });
+  const flash = G.pawFlash.t > 0;
+  const hint = racing && G.raceT < 8 && !flash;
+  ctx.save();
+  if (flash) {
+    const pop = 1 + 0.035 * (G.pawFlash.t / 0.1);
+    ctx.translate(x + w / 2, y + h / 2);
+    ctx.scale(pop, pop);
+    ctx.translate(-(x + w / 2), -(y + h / 2));
+  }
+  ctx.fillStyle = flash ? 'rgba(135,220,98,0.95)'
+    : hint ? 'rgba(70,90,60,' + (0.62 + 0.18 * Math.sin(G.animT * 7)).toFixed(2) + ')'
+    : 'rgba(30,38,26,0.6)';
+  rr(x, y, w, h, 26);
+  ctx.fill();
+  ctx.strokeStyle = flash ? '#eaffdf' : 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = flash ? 4 : 2.5;
+  rr(x, y, w, h, 26);
+  ctx.stroke();
+  tx('🐾', x + w / 2 - 92, y + h / 2 - 2, 46, { sw: 0 });
+  tx('🐾', x + w / 2 + 92, y + h / 2 - 2, 46, { sw: 0 });
+  tx('TAP', x + w / 2, y + h / 2 + 2, 32, { c: 'rgba(255,255,255,0.9)', sw: 0 });
+  ctx.restore();
+  if (hint) {
+    tx('TAP!', x + w / 2, y - 16, 17, { c: '#ffd34e', stroke: 'rgba(0,0,0,0.55)', sw: 3 });
   }
   if (racing && G.raceT < 6) {
     const a = clamp(6 - G.raceT, 0, 1) * 0.9;
@@ -1724,13 +1721,11 @@ function handleKey(code) {
       else if (code === 'Space' || code === 'Enter') startRace();
       break;
     case 'countdown':
-      if (KEYS_L.includes(code)) playerTap('L');
-      else if (KEYS_R.includes(code)) playerTap('R');
+      if (KEYS_L.includes(code) || KEYS_R.includes(code)) playerTap();
       else if (code === 'KeyP' || code === 'Escape') setPause(true);
       break;
     case 'racing':
-      if (KEYS_L.includes(code)) playerTap('L');
-      else if (KEYS_R.includes(code)) playerTap('R');
+      if (KEYS_L.includes(code) || KEYS_R.includes(code)) playerTap();
       else if (code === 'Space') dogZoomies(G.player);
       else if (code === 'KeyP' || code === 'Escape') setPause(true);
       break;
@@ -1773,9 +1768,8 @@ function uiAction(id) {
   if (id === 'menu') { if (G.state !== 'finished' || G.resultsT > 0.3) toTitle(); return; }
   if (id === 'start') { startRace(); return; }
   if (id === 'rematch') { if (G.resultsT > 0.3) startRace(); return; }
-  if (id === 'pawL') { playerTap('L'); return; }
-  if (id === 'pawR') { playerTap('R'); return; }
-  if (id === 'zoom') { if (!dogZoomies(G.player)) playerTap('R'); return; }
+  if (id === 'paw') { playerTap(); return; }
+  if (id === 'zoom') { if (!dogZoomies(G.player)) playerTap(); return; }
   if (id.indexOf('diff-') === 0) {
     const k = id.slice(5);
     if (DIFF_ORDER.includes(k)) { G.diff = k; saveData(); }
@@ -1800,7 +1794,7 @@ canvas.addEventListener('pointerdown', e => {
   }
   // generous fallback: anywhere below the HUD counts as a stride tap
   if ((G.state === 'racing' || G.state === 'countdown') && p.y > safeTop + 120) {
-    playerTap(p.x < W / 2 ? 'L' : 'R');
+    playerTap();
   }
 });
 canvas.addEventListener('pointermove', e => { G.pointer = toLogical(e); });
