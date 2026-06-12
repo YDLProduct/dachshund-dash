@@ -216,6 +216,8 @@ function applyPlayerChar() {
   G.cpu.colors = rival.colors;
 }
 applyPlayerChar();
+// idle stand-ins drawn inside the picker cards by the real dog renderer
+const PREVIEW = ROSTER.map(r => makeDog('preview-' + r.id, r.name, r.colors, LANES.player));
 
 /* ===================== audio ===================== */
 
@@ -1334,8 +1336,8 @@ function drawTitle() {
   tx('DASH!', 480, 98 + wob, 46, { c: '#fff', stroke: '#5b3413', sw: 8 });
   tx('May the best wiener win! 🌭', 480, 132, 15, { c: '#fff', stroke: 'rgba(40,25,10,0.7)', sw: 4 });
 
-  // character picker — two pups, the CPU runs whichever you don't pick
-  tx('PICK YOUR PUP — the CPU runs the other', 480, 158, 12, { c: 'rgba(255,255,255,0.85)', stroke: 'rgba(0,0,0,0.5)', sw: 3 });
+  // character picker — two pups, the other one races you
+  tx('PICK YOUR PUP — the other one races you', 480, 158, 12, { c: 'rgba(255,255,255,0.85)', stroke: 'rgba(0,0,0,0.5)', sw: 3 });
   const cw = 150, chh = 82, cgap = 22, cy = 170;
   const cx0 = 480 - (cw * 2 + cgap) / 2;
   for (let i = 0; i < ROSTER.length; i++) {
@@ -1361,12 +1363,9 @@ function drawTitle() {
       rr(x, cy, cw, chh, 14);
       ctx.stroke();
     }
-    ctx.translate(x + cw / 2 - 32, cy + 34);
-    ctx.scale(1.6, 1.6);
-    drawMiniHead(0, 0, ch.colors);
+    drawDog(x + cw / 2, cy + 54, 0.56, PREVIEW[i], false);
     ctx.restore();
-    tx(ch.name, x + cw / 2 + 28, cy + 38, 15, { c: sel ? '#fff' : 'rgba(255,255,255,0.85)', sw: 0 });
-    tx(sel ? 'YOU' : 'CPU', x + cw / 2, cy + chh - 13, 10, { c: sel ? '#ffe9c8' : 'rgba(255,255,255,0.6)', sw: 0 });
+    tx(ch.name + ' · ' + (sel ? 'YOU' : 'RIVAL'), x + cw / 2, cy + 70, 11, { c: sel ? '#fff' : 'rgba(255,255,255,0.8)', sw: 0 });
   }
 
   // difficulty pills
@@ -1408,9 +1407,9 @@ function drawTitle() {
   }
 
   button('mute', 892, 12, 27, 27, G.muted ? '🔇' : '🔊', { bg: 'rgba(20,16,10,0.45)', hotBg: 'rgba(20,16,10,0.7)', r: 8, size: 13, pad: isTouch ? 10 : 0 });
-  tx(G.cpu.name + ' (CPU)', 132, 348, 12, { c: '#cfe2ff', stroke: 'rgba(0,0,0,0.55)', sw: 3 });
+  tx(G.cpu.name + ' (RIVAL)', 132, 348, 12, { c: '#cfe2ff', stroke: 'rgba(0,0,0,0.55)', sw: 3 });
   tx(G.player.name + ' (YOU)', 132, 442, 12, { c: '#ffd9a8', stroke: 'rgba(0,0,0,0.55)', sw: 3 });
-  tx('v1.2', 936, 526, 10, { c: 'rgba(255,255,255,0.4)', sw: 0, align: 'right' });
+  tx('v1.3', 936, 526, 10, { c: 'rgba(255,255,255,0.4)', sw: 0, align: 'right' });
 }
 
 function drawCountdown() {

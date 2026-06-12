@@ -250,6 +250,8 @@ function applyPlayerChar() {
   G.cpu.colors = rival.colors;
 }
 applyPlayerChar();
+// idle stand-ins drawn inside the picker cards by the real dog renderer
+const PREVIEW = ROSTER.map(r => makeDog('preview-' + r.id, r.name, r.colors, LANES.player));
 
 /* ===================== audio ===================== */
 
@@ -1399,8 +1401,8 @@ function drawTitle() {
   tx('DASH!', 270, st + 110 + wob, 52, { c: '#fff', stroke: '#5b3413', sw: 9 });
   tx('May the best wiener win! 🌭', 270, st + 148, 16, { c: '#fff', stroke: 'rgba(40,25,10,0.7)', sw: 4 });
 
-  // character picker — two pups, the CPU runs whichever you don't pick
-  tx('PICK YOUR PUP — the CPU runs the other', 270, st + 186, 13, { c: 'rgba(255,255,255,0.85)', stroke: 'rgba(0,0,0,0.5)', sw: 3 });
+  // character picker — two pups, the other one races you
+  tx('PICK YOUR PUP — the other one races you', 270, st + 186, 13, { c: 'rgba(255,255,255,0.85)', stroke: 'rgba(0,0,0,0.5)', sw: 3 });
   const cw = 230, chh = 200, cgap = 20;
   const cx0 = 270 - (cw * 2 + cgap) / 2;
   for (let i = 0; i < ROSTER.length; i++) {
@@ -1425,12 +1427,10 @@ function drawTitle() {
       rr(x, y, cw, chh, 20);
       ctx.stroke();
     }
-    ctx.translate(x + cw / 2 - 12, y + 78);
-    ctx.scale(3.0, 3.0);
-    drawMiniHead(0, 0, ch.colors);
+    drawDog(x + cw / 2, y + 118, 1.1, PREVIEW[i], false);
     ctx.restore();
-    tx(ch.name, x + cw / 2, y + chh - 56, 18, { c: sel ? '#fff' : 'rgba(255,255,255,0.88)', sw: 0 });
-    tx(sel ? '★ YOU' : 'CPU', x + cw / 2, y + chh - 26, 13, { c: sel ? '#ffe9c8' : 'rgba(255,255,255,0.6)', sw: 0 });
+    tx(ch.name, x + cw / 2, y + chh - 52, 18, { c: sel ? '#fff' : 'rgba(255,255,255,0.88)', sw: 0 });
+    tx(sel ? '★ YOU' : 'RIVAL', x + cw / 2, y + chh - 24, 13, { c: sel ? '#ffe9c8' : 'rgba(255,255,255,0.6)', sw: 0 });
   }
 
   // difficulty
@@ -1471,11 +1471,11 @@ function drawTitle() {
     drawDog(140, py, 1.0, G.player, false);
     drawDog(420, py, 0.92, G.cpu, false);
     tx(G.player.name + ' (YOU)', 140, py + 16, 13, { c: '#ffd9a8', stroke: 'rgba(0,0,0,0.55)', sw: 3 });
-    tx(G.cpu.name + ' (CPU)', 420, py + 16, 13, { c: '#cfe2ff', stroke: 'rgba(0,0,0,0.55)', sw: 3 });
+    tx(G.cpu.name + ' (RIVAL)', 420, py + 16, 13, { c: '#cfe2ff', stroke: 'rgba(0,0,0,0.55)', sw: 3 });
   }
 
   button('mute', 484, st + 10, 44, 44, G.muted ? '🔇' : '🔊', { bg: 'rgba(20,16,10,0.45)', hotBg: 'rgba(20,16,10,0.7)', r: 12, size: 19, pad: 8 });
-  tx('v1.2', 528, H - safeBottom - 10, 10, { c: 'rgba(255,255,255,0.4)', sw: 0, align: 'right' });
+  tx('v1.3', 528, H - safeBottom - 10, 10, { c: 'rgba(255,255,255,0.4)', sw: 0, align: 'right' });
 }
 
 function drawCountdown() {
