@@ -1356,7 +1356,7 @@ function drawControls() {
   const x = 18, y = ct + 74, w = 504, h = 148;
   G.ui.push({ id: 'paw', x, y, w, h });
   const flash = G.pawFlash.t > 0;
-  const hint = racing && G.raceT < 8 && !flash;
+  const hint = racing && G.raceT < 8 && !flash && !(zFull || p.zoomT > 0);
   ctx.save();
   if (flash) {
     const pop = 1 + 0.035 * (G.pawFlash.t / 0.1);
